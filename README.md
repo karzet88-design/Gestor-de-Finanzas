@@ -1,1 +1,1 @@
-# Zent - Gestor de Finanzas y Gastos
+# Koin - Gestor de Finanzas y Gastos
