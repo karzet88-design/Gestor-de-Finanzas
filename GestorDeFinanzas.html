@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>Gestor de Ingresos y Gastos</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --card-bg: #080808;
+            --card-inner: #000000;
+            --field-bg: #0d0d0d;
+            --text-main: #f2f2f2;
+            --text-muted: #8c8c8c;
+            --border-color: #1c1c1c;
+            --border-strong: #2c2c2c;
+            --accent: #ffffff;
+            --accent-text: #000000;
+            --accent-hover: #dcdcdc;
+            --danger: #ff7b7b;
+            --success: #6ee7a0;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 20px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Pantalla de Bienvenida con Usuario */
+        #welcome-screen {
+            text-align: center;
+            max-width: 360px;
+            width: 100%;
+        }
+
+        #welcome-screen h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.8px;
+            color: #ffffff;
+        }
+
+        #welcome-screen p {
+            color: var(--text-muted);
+            margin-bottom: 28px;
+            font-size: 0.95rem;
+        }
+
+        #welcome-screen input {
+            margin-bottom: 14px;
+            text-align: center;
+            font-size: 0.95rem;
+            padding: 13px;
+            border-radius: var(--radius-md);
+        }
+
+        /* Pantalla Principal (Oculta al inicio) */
+        #app-screen {
+            display: none;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        header h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            letter-spacing: -0.4px;
+            color: #ffffff;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Botones Minimalistas */
+        button, .btn {
+            background-color: var(--accent);
+            color: var(--accent-text);
+            border: 1px solid transparent;
+            padding: 11px 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+            width: 100%;
+        }
+
+        button:hover, .btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-inline {
+            width: auto;
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-strong);
+        }
+
+        .btn-secondary:hover {
+            background-color: #121212;
+            border-color: #3a3a3a;
+        }
+
+        .btn-danger {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid #2b1616;
+            padding: 7px 13px;
+            font-size: 0.8rem;
+            width: auto;
+        }
+
+        .btn-danger:hover {
+            background-color: #170b0b;
+            border-color: #4a2323;
+        }
+
+        .btn-compact {
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            border-radius: 999px;
+        }
+
+        /* Contenedor de Años (Registros Anuales) */
+        .year-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 26px;
+            margin-bottom: 28px;
+        }
+
+        .year-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 22px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .year-card.minimized .year-header {
+            margin-bottom: 0;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .year-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            letter-spacing: -0.4px;
+            color: #ffffff;
+        }
+
+        .year-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .months-list.hidden, .month-content.hidden {
+            display: none;
+        }
+
+        /* Tarjeta de Mes */
+        .month-card {
+            background-color: var(--card-inner);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .month-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .month-card.minimized {
+            padding-bottom: 20px;
+        }
+
+        .month-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .month-card.minimized .month-header {
+            margin-bottom: 0;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .month-title {
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: capitalize;
+            color: #ffffff;
+        }
+
+        .month-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        /* Resumen de Totales */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 22px;
+            background: var(--card-bg);
+            padding: 16px 18px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .summary-item label {
+            display: block;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 4px;
+        }
+
+        .summary-item span {
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        .negative { color: var(--danger); }
+        .positive { color: var(--success); }
+
+        /* Secciones de Tablas (Ingresos y Gastos) */
+        .sections-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px;
+            width: 100%;
+        }
+
+        @media (max-width: 850px) {
+            .sections-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .sub-section h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-main);
+        }
+
+        .inline-form {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        input, select {
+            padding: 9px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            background: var(--field-bg);
+            color: var(--text-main);
+            outline: none;
+            width: 100%;
+            transition: border-color 0.2s ease, background 0.2s ease;
+        }
+
+        input::placeholder {
+            color: #5c5c5c;
+        }
+
+        input[type="date"] {
+            color-scheme: dark;
+        }
+
+        input:focus, select:focus {
+            border-color: #5a5a5a;
+            background: #111111;
+        }
+
+        select option {
+            background: #0d0d0d;
+            color: var(--text-main);
+        }
+
+        .concept-wrap { position: relative; flex: 2 1 130px; min-width: 0; }
+        .input-concept { width: 100%; min-width: 0; }
+        .input-date { flex: 1.3 1 120px; min-width: 0; }
+        .input-amount { flex: 1 1 80px; min-width: 0; }
+
+        .inline-form > button {
+            padding: 9px 16px;
+            font-size: 0.9rem;
+            width: auto;
+        }
+
+        /* Menú de conceptos frecuentes */
+        .concept-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            min-width: 100%;
+            width: max-content;
+            max-width: 280px;
+            max-height: 220px;
+            overflow-y: auto;
+            background: #0a0a0a;
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-md);
+            padding: 6px;
+            z-index: 50;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.9);
+        }
+
+        .concept-menu.open { display: block; }
+
+        .concept-option {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            color: var(--text-main);
+        }
+
+        .concept-option:hover { background: #181818; }
+
+        .concept-empty {
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .concept-manage {
+            margin-top: 4px;
+            padding: 8px 12px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+            cursor: pointer;
+        }
+
+        .concept-manage:hover { color: #ffffff; }
+
+        .table-container {
+            max-height: 190px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+            table-layout: fixed;
+        }
+
+        th {
+            background-color: var(--card-bg);
+            position: sticky;
+            top: 0;
+            font-weight: 500;
+            color: var(--text-muted);
+            padding: 9px 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 9px 10px;
+            border-bottom: 1px solid var(--border-color);
+            word-break: break-word;
+        }
+
+        tr:last-child td { border-bottom: none; }
+
+        th:nth-child(1), td:nth-child(1) { width: 40%; }
+        th:nth-child(2), td:nth-child(2) { width: 32%; }
+        th:nth-child(3), td:nth-child(3) { width: 20%; }
+        th:nth-child(4), td:nth-child(4) { width: 8%; text-align: center; }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 16px;
+            font-size: 0.85rem;
+        }
+
+        .btn-x {
+            padding: 2px 7px;
+            font-size: 0.7rem;
+            border-radius: 999px;
+        }
+
+        /* Modales */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            padding: 26px;
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 340px;
+            border: 1px solid var(--border-strong);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal h3 {
+            font-size: 1.05rem;
+            margin-bottom: 16px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .modal input, .modal select {
+            margin-bottom: 16px;
+            padding: 11px 12px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .modal-actions button {
+            width: auto;
+        }
+
+        /* Modal de conceptos frecuentes */
+        .modal-wide { max-width: 400px; }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            margin-bottom: 16px;
+            background: #000000;
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+        }
+
+        .tab {
+            flex: 1;
+            width: auto;
+            padding: 8px 12px;
+            font-size: 0.82rem;
+            background: transparent;
+            color: var(--text-muted);
+            border-radius: 999px;
+        }
+
+        .tab:hover { background: #121212; color: #ffffff; }
+        .tab.active { background: var(--accent); color: var(--accent-text); }
+
+        .concept-list {
+            max-height: 240px;
+            overflow-y: auto;
+            margin-bottom: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .concept-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .modal .concept-row input,
+        .modal .inline-form input {
+            margin-bottom: 0;
+            padding: 9px 12px;
+        }
+
+        .modal .inline-form { flex-wrap: nowrap; margin-bottom: 18px; }
+
+        .hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+
+        /* Resumen de todos los meses */
+        .modal-resumen-meses { max-width: 520px; }
+
+        .resumen-meses-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 20px;
+        }
+
+        .resumen-table th:nth-child(n),
+        .resumen-table td:nth-child(n) {
+            width: auto;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .resumen-table th:first-child,
+        .resumen-table td:first-child {
+            text-align: left;
+            text-transform: capitalize;
+        }
+
+        .resumen-table tr.total-row td {
+            font-weight: 600;
+            border-top: 1px solid var(--border-strong);
+            background: var(--card-bg);
+        }
+
+        .resumen-table tr.total-row td:first-child { text-transform: none; }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: #262626; border-radius: 999px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+    </style>
+</head>
+<body>
+
+    <!-- Pantalla 1: Ingreso de Usuario -->
+    <div id="welcome-screen">
+        <h1>Control Financiero</h1>
+        <p>Ingresa tu nombre para comenzar a gestionar tus finanzas.</p>
+        <input type="text" id="input-nombre-usuario" placeholder="Tu Nombre">
+        <button id="btn-entrar">Entrar al Gestor</button>
+    </div>
+
+    <!-- Pantalla 2: Interfaz Principal -->
+    <div id="app-screen">
+        <header>
+            <h2 id="header-title">Finanzas de Usuario</h2>
+            <div class="header-actions">
+                <button class="btn-secondary btn-inline" id="btn-abrir-conceptos">Conceptos frecuentes</button>
+                <button class="btn-inline" id="btn-abrir-modal-anio">+ Nuevo Registro</button>
+            </div>
+        </header>
+
+        <div id="years-container">
+            <div id="no-years" class="empty-state" style="padding: 40px;">
+                No hay registros creados. Da clic en "+ Nuevo Registro" para comenzar.
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Nuevo Registro (Año) -->
+    <div id="modal-anio" class="modal-overlay">
+        <div class="modal">
+            <h3>Nuevo Registro Anual</h3>
+            <input type="text" id="input-nombre-anio" placeholder="Ej. Año 2026 o Proyecto X">
+            <div class="modal-actions">
+                <button class="btn-secondary btn-inline" id="cancelar-anio">Cancelar</button>
+                <button class="btn-inline" id="guardar-anio">Crear</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Agregar Mes -->
+    <div id="modal-mes" class="modal-overlay">
+        <div class="modal">
+            <h3>Seleccionar Mes</h3>
+            <select id="select-mes">
+                <option value="Enero">Enero</option>
+                <option value="Febrero">Febrero</option>
+                <option value="Marzo">Marzo</option>
+                <option value="Abril">Abril</option>
+                <option value="Mayo">Mayo</option>
+                <option value="Junio">Junio</option>
+                <option value="Julio">Julio</option>
+                <option value="Agosto">Agosto</option>
+                <option value="Septiembre">Septiembre</option>
+                <option value="Octubre">Octubre</option>
+                <option value="Noviembre">Noviembre</option>
+                <option value="Diciembre">Diciembre</option>
+            </select>
+            <div class="modal-actions">
+                <button class="btn-secondary btn-inline" id="cancelar-mes">Cancelar</button>
+                <button class="btn-inline" id="guardar-mes">Agregar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Resumen de Año -->
+    <div id="modal-resumen" class="modal-overlay">
+        <div class="modal" style="max-width: 380px;">
+            <h3 id="resumen-titulo-modal">Resumen Anual</h3>
+            <div class="summary-grid" style="margin-bottom: 20px;">
+                <div class="summary-item">
+                    <label>Ingresos Totales</label>
+                    <span id="resumen-ingresos" class="positive">$0.00</span>
+                </div>
+                <div class="summary-item">
+                    <label>Gastos Totales</label>
+                    <span id="resumen-gastos" class="negative">$0.00</span>
+                </div>
+                <div class="summary-item">
+                    <label>Balance Neto Anual</label>
+                    <span id="resumen-neto">$0.00</span>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-inline" id="cerrar-resumen">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Resumen de Todos los Meses -->
+    <div id="modal-resumen-meses" class="modal-overlay">
+        <div class="modal modal-resumen-meses">
+            <h3 id="resumen-meses-titulo">Resumen de todos los meses</h3>
+            <div class="resumen-meses-wrap">
+                <table class="resumen-table">
+                    <thead>
+                        <tr>
+                            <th>Mes</th>
+                            <th>Ingresos</th>
+                            <th>Gastos</th>
+                            <th>Restante</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resumen-meses-body"></tbody>
+                </table>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-inline" id="cerrar-resumen-meses">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Conceptos Frecuentes -->
+    <div id="modal-conceptos" class="modal-overlay">
+        <div class="modal modal-wide">
+            <h3>Conceptos frecuentes</h3>
+            <div class="tabs">
+                <button class="tab active" data-tipo="ingresos">Ingresos</button>
+                <button class="tab" data-tipo="gastos">Gastos</button>
+            </div>
+            <p class="hint">Edita el texto de un concepto para renombrarlo. Aparecerán al escribir en "Concepto".</p>
+            <div id="lista-conceptos" class="concept-list"></div>
+            <div class="inline-form">
+                <input type="text" id="input-nuevo-concepto" placeholder="Nuevo concepto">
+                <button class="btn-inline" id="agregar-concepto">Agregar</button>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-inline" id="cerrar-conceptos">Listo</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let usuarioData = localStorage.getItem('nombreUsuario_finanzas') || '';
+        let anosData = JSON.parse(localStorage.getItem('anosData_finanzas')) || [];
+        let anioSeleccionadoId = null;
+
+        // Conceptos frecuentes (editables) para ingresos y gastos
+        const CONCEPTOS_INICIALES = {
+            ingresos: ['Sueldo', 'Freelance', 'Ventas', 'Bonos'],
+            gastos: ['Renta', 'Comida', 'Transporte', 'Servicios', 'Suscripciones']
+        };
+
+        function cargarConceptos() {
+            try {
+                const guardado = JSON.parse(localStorage.getItem('conceptosFrecuentes_finanzas'));
+                if (guardado && Array.isArray(guardado.ingresos) && Array.isArray(guardado.gastos)) {
+                    return guardado;
+                }
+            } catch (e) {}
+            return JSON.parse(JSON.stringify(CONCEPTOS_INICIALES));
+        }
+
+        let conceptosData = cargarConceptos();
+        let tipoConceptoModal = 'ingresos';
+
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const appScreen = document.getElementById('app-screen');
+        const inputNombreUsuario = document.getElementById('input-nombre-usuario');
+        const btnEntrar = document.getElementById('btn-entrar');
+        const headerTitle = document.getElementById('header-title');
+        const yearsContainer = document.getElementById('years-container');
+
+        const modalAnio = document.getElementById('modal-anio');
+        const btnAbrirModalAnio = document.getElementById('btn-abrir-modal-anio');
+        const cancelarAnio = document.getElementById('cancelar-anio');
+        const guardarAnio = document.getElementById('guardar-anio');
+        const inputNombreAnio = document.getElementById('input-nombre-anio');
+
+        const modalMes = document.getElementById('modal-mes');
+        const cancelarMes = document.getElementById('cancelar-mes');
+        const guardarMes = document.getElementById('guardar-mes');
+        const selectMes = document.getElementById('select-mes');
+
+        const modalResumen = document.getElementById('modal-resumen');
+        const cerrarResumen = document.getElementById('cerrar-resumen');
+        const resumenTituloModal = document.getElementById('resumen-titulo-modal');
+        const resumenIngresos = document.getElementById('resumen-ingresos');
+        const resumenGastos = document.getElementById('resumen-gastos');
+        const resumenNeto = document.getElementById('resumen-neto');
+
+        const modalConceptos = document.getElementById('modal-conceptos');
+        const btnAbrirConceptos = document.getElementById('btn-abrir-conceptos');
+        const cerrarConceptos = document.getElementById('cerrar-conceptos');
+        const listaConceptos = document.getElementById('lista-conceptos');
+        const inputNuevoConcepto = document.getElementById('input-nuevo-concepto');
+        const agregarConcepto = document.getElementById('agregar-concepto');
+
+        if (usuarioData) {
+            welcomeScreen.style.display = 'none';
+            appScreen.style.display = 'block';
+            headerTitle.textContent = `Finanzas de ${usuarioData}`;
+            renderizarApp();
+        }
+
+        btnEntrar.addEventListener('click', () => {
+            const nombre = inputNombreUsuario.value.trim();
+            if (!nombre) {
+                alert('Por favor ingresa tu nombre.');
+                return;
+            }
+            usuarioData = nombre;
+            localStorage.setItem('nombreUsuario_finanzas', usuarioData);
+            welcomeScreen.style.display = 'none';
+            appScreen.style.display = 'block';
+            headerTitle.textContent = `Finanzas de ${usuarioData}`;
+            renderizarApp();
+        });
+
+        function guardarEnMemoria() {
+            localStorage.setItem('anosData_finanzas', JSON.stringify(anosData));
+        }
+
+        function guardarConceptos() {
+            localStorage.setItem('conceptosFrecuentes_finanzas', JSON.stringify(conceptosData));
+        }
+
+        function escaparHTML(texto) {
+            return String(texto)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function normalizar(texto) {
+            return String(texto).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        }
+
+        btnAbrirModalAnio.addEventListener('click', () => {
+            inputNombreAnio.value = '';
+            modalAnio.style.display = 'flex';
+        });
+
+        cancelarAnio.addEventListener('click', () => modalAnio.style.display = 'none');
+
+        guardarAnio.addEventListener('click', () => {
+            const nombreAnio = inputNombreAnio.value.trim();
+            if (!nombreAnio) {
+                alert('Ingresa un nombre para el registro.');
+                return;
+            }
+            anosData.push({
+                id: Date.now(),
+                nombre: nombreAnio,
+                minimizado: false,
+                meses: []
+            });
+            guardarEnMemoria();
+            modalAnio.style.display = 'none';
+            renderizarApp();
+        });
+
+        function abrirModalMes(idAnio) {
+            anioSeleccionadoId = idAnio;
+            modalMes.style.display = 'flex';
+        }
+
+        cancelarMes.addEventListener('click', () => modalMes.style.display = 'none');
+
+        guardarMes.addEventListener('click', () => {
+            const nombreMes = selectMes.value;
+            const anio = anosData.find(a => a.id === anioSeleccionadoId);
+
+            if (anio.meses.some(m => m.nombre === nombreMes)) {
+                alert('Este mes ya existe en este registro.');
+                return;
+            }
+            anio.meses.push({
+                id: Date.now(),
+                nombre: nombreMes,
+                minimizado: false, // Propiedad agregada para minimizar el mes
+                ingresos: [],
+                gastos: []
+            });
+            guardarEnMemoria();
+            modalMes.style.display = 'none';
+            renderizarApp();
+        });
+
+        function eliminarAnio(idAnio) {
+            if (confirm('¿Eliminar este registro anual completo?')) {
+                anosData = anosData.filter(a => a.id !== idAnio);
+                guardarEnMemoria();
+                renderizarApp();
+            }
+        }
+
+        function toggleMinimizarAnio(idAnio) {
+            const anio = anosData.find(a => a.id === idAnio);
+            if (anio) {
+                anio.minimizado = !anio.minimizado;
+                guardarEnMemoria();
+                renderizarApp();
+            }
+        }
+
+        function toggleMinimizarMes(idAnio, idMes) {
+            const anio = anosData.find(a => a.id === idAnio);
+            if (anio) {
+                const mes = anio.meses.find(m => m.id === idMes);
+                if (mes) {
+                    mes.minimizado = !mes.minimizado;
+                    guardarEnMemoria();
+                    renderizarApp();
+                }
+            }
+        }
+
+        function eliminarMes(idAnio, idMes) {
+            if (confirm('¿Estás seguro de eliminar este mes?')) {
+                const anio = anosData.find(a => a.id === idAnio);
+                anio.meses = anio.meses.filter(m => m.id !== idMes);
+                guardarEnMemoria();
+                renderizarApp();
+            }
+        }
+
+        function agregarMovimiento(idAnio, idMes, tipo) {
+            const conceptoInput = document.getElementById(`${tipo}-concepto-${idMes}`);
+            const fechaInput = document.getElementById(`${tipo}-fecha-${idMes}`);
+            const montoInput = document.getElementById(`${tipo}-monto-${idMes}`);
+
+            const concepto = conceptoInput.value.trim();
+            const fecha = fechaInput.value;
+            const monto = parseFloat(montoInput.value);
+
+            if (!concepto || !fecha || isNaN(monto)) {
+                alert('Completa todos los campos correctamente.');
+                return;
+            }
+
+            const anio = anosData.find(a => a.id === idAnio);
+            const mes = anio.meses.find(m => m.id === idMes);
+
+            mes[tipo].push({ concepto, fecha, monto });
+            guardarEnMemoria();
+
+            conceptoInput.value = '';
+            fechaInput.value = '';
+            montoInput.value = '';
+            renderizarApp();
+        }
+
+        function eliminarMovimiento(idAnio, idMes, tipo, index) {
+            const anio = anosData.find(a => a.id === idAnio);
+            const mes = anio.meses.find(m => m.id === idMes);
+            mes[tipo].splice(index, 1);
+            guardarEnMemoria();
+            renderizarApp();
+        }
+
+        function generarResumenAnio(idAnio) {
+            const anio = anosData.find(a => a.id === idAnio);
+            let totalIngresosAnual = 0;
+            let totalGastosAnual = 0;
+
+            anio.meses.forEach(mes => {
+                totalIngresosAnual += mes.ingresos.reduce((acc, item) => acc + item.monto, 0);
+                totalGastosAnual += mes.gastos.reduce((acc, item) => acc + item.monto, 0);
+            });
+
+            const netoAnual = totalIngresosAnual - totalGastosAnual;
+
+            resumenTituloModal.textContent = `Resumen: ${anio.nombre}`;
+            resumenIngresos.textContent = `$${totalIngresosAnual.toFixed(2)}`;
+            resumenGastos.textContent = `$${totalGastosAnual.toFixed(2)}`;
+            resumenNeto.textContent = `$${netoAnual.toFixed(2)}`;
+            resumenNeto.className = netoAnual < 0 ? 'negative' : 'positive';
+
+            modalResumen.style.display = 'flex';
+        }
+
+        cerrarResumen.addEventListener('click', () => modalResumen.style.display = 'none');
+
+        /* ---------- Resumen de todos los meses ---------- */
+
+        const ORDEN_MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const modalResumenMeses = document.getElementById('modal-resumen-meses');
+        const resumenMesesTitulo = document.getElementById('resumen-meses-titulo');
+        const resumenMesesBody = document.getElementById('resumen-meses-body');
+
+        function formatoMoneda(valor) {
+            return `$${valor.toFixed(2)}`;
+        }
+
+        function generarResumenMeses(idAnio) {
+            const anio = anosData.find(a => a.id === idAnio);
+            if (!anio) return;
+
+            resumenMesesTitulo.textContent = `Resumen de todos los meses: ${anio.nombre}`;
+            resumenMesesBody.innerHTML = '';
+
+            if (anio.meses.length === 0) {
+                const fila = document.createElement('tr');
+                const celda = document.createElement('td');
+                celda.colSpan = 4;
+                celda.className = 'empty-state';
+                celda.textContent = 'No hay meses agregados en este registro.';
+                fila.appendChild(celda);
+                resumenMesesBody.appendChild(fila);
+                modalResumenMeses.style.display = 'flex';
+                return;
+            }
+
+            const mesesOrdenados = [...anio.meses].sort((a, b) => ORDEN_MESES.indexOf(a.nombre) - ORDEN_MESES.indexOf(b.nombre));
+            let totalIngresos = 0;
+            let totalGastos = 0;
+
+            mesesOrdenados.forEach(mes => {
+                const ingresos = mes.ingresos.reduce((acc, item) => acc + item.monto, 0);
+                const gastos = mes.gastos.reduce((acc, item) => acc + item.monto, 0);
+                const restante = ingresos - gastos;
+                totalIngresos += ingresos;
+                totalGastos += gastos;
+
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td>${escaparHTML(mes.nombre)}</td>
+                    <td class="positive">${formatoMoneda(ingresos)}</td>
+                    <td class="negative">${formatoMoneda(gastos)}</td>
+                    <td class="${restante < 0 ? 'negative' : 'positive'}">${formatoMoneda(restante)}</td>
+                `;
+                resumenMesesBody.appendChild(fila);
+            });
+
+            const neto = totalIngresos - totalGastos;
+            const filaTotal = document.createElement('tr');
+            filaTotal.className = 'total-row';
+            filaTotal.innerHTML = `
+                <td>Total</td>
+                <td class="positive">${formatoMoneda(totalIngresos)}</td>
+                <td class="negative">${formatoMoneda(totalGastos)}</td>
+                <td class="${neto < 0 ? 'negative' : 'positive'}">${formatoMoneda(neto)}</td>
+            `;
+            resumenMesesBody.appendChild(filaTotal);
+
+            modalResumenMeses.style.display = 'flex';
+        }
+
+        document.getElementById('cerrar-resumen-meses').addEventListener('click', () => modalResumenMeses.style.display = 'none');
+
+        /* ---------- Menú desplegable de conceptos frecuentes ---------- */
+
+        function cerrarMenusConceptos() {
+            document.querySelectorAll('.concept-menu.open').forEach(m => m.classList.remove('open'));
+        }
+
+        function abrirMenuConceptos(input) {
+            const wrap = input.closest('.concept-wrap');
+            if (!wrap) return;
+            const menu = wrap.querySelector('.concept-menu');
+            const tipo = input.dataset.tipo;
+            const filtro = normalizar(input.value.trim());
+            const lista = conceptosData[tipo].filter(c => !filtro || normalizar(c).includes(filtro));
+
+            menu.innerHTML = '';
+
+            if (lista.length === 0) {
+                const vacio = document.createElement('div');
+                vacio.className = 'concept-empty';
+                vacio.textContent = conceptosData[tipo].length === 0
+                    ? 'Aún no tienes conceptos frecuentes'
+                    : 'Sin coincidencias';
+                menu.appendChild(vacio);
+            } else {
+                lista.forEach(c => {
+                    const opcion = document.createElement('div');
+                    opcion.className = 'concept-option';
+                    opcion.textContent = c;
+                    opcion.dataset.valor = c;
+                    menu.appendChild(opcion);
+                });
+            }
+
+            const gestionar = document.createElement('div');
+            gestionar.className = 'concept-manage';
+            gestionar.dataset.tipo = tipo;
+            gestionar.textContent = '✎ Editar conceptos';
+            menu.appendChild(gestionar);
+
+            cerrarMenusConceptos();
+            menu.classList.add('open');
+        }
+
+        document.addEventListener('focusin', e => {
+            if (e.target.classList && e.target.classList.contains('input-concept')) abrirMenuConceptos(e.target);
+        });
+
+        document.addEventListener('click', e => {
+            if (e.target.classList && e.target.classList.contains('input-concept')) abrirMenuConceptos(e.target);
+        });
+
+        document.addEventListener('input', e => {
+            if (e.target.classList && e.target.classList.contains('input-concept')) abrirMenuConceptos(e.target);
+        });
+
+        document.addEventListener('mousedown', e => {
+            const opcion = e.target.closest('.concept-option');
+            if (opcion) {
+                e.preventDefault();
+                const wrap = opcion.closest('.concept-wrap');
+                const input = wrap.querySelector('.input-concept');
+                input.value = opcion.dataset.valor;
+                cerrarMenusConceptos();
+                const fecha = wrap.parentElement.querySelector('.input-date');
+                if (fecha) fecha.focus();
+                return;
+            }
+
+            const gestionar = e.target.closest('.concept-manage');
+            if (gestionar) {
+                e.preventDefault();
+                cerrarMenusConceptos();
+                abrirModalConceptos(gestionar.dataset.tipo);
+                return;
+            }
+
+            if (!e.target.closest('.concept-wrap')) cerrarMenusConceptos();
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' || e.key === 'Tab') cerrarMenusConceptos();
+        });
+
+        /* ---------- Modal para editar conceptos frecuentes ---------- */
+
+        function renderizarListaConceptos() {
+            const lista = conceptosData[tipoConceptoModal];
+            listaConceptos.innerHTML = '';
+
+            if (lista.length === 0) {
+                const vacio = document.createElement('div');
+                vacio.className = 'empty-state';
+                vacio.textContent = 'Sin conceptos. Agrega el primero abajo.';
+                listaConceptos.appendChild(vacio);
+                return;
+            }
+
+            lista.forEach((concepto, i) => {
+                const fila = document.createElement('div');
+                fila.className = 'concept-row';
+
+                const campo = document.createElement('input');
+                campo.type = 'text';
+                campo.value = concepto;
+                campo.addEventListener('change', () => {
+                    const nuevo = campo.value.trim();
+                    const duplicado = lista.some((c, j) => j !== i && normalizar(c) === normalizar(nuevo));
+                    if (!nuevo || duplicado) {
+                        campo.value = lista[i];
+                        return;
+                    }
+                    lista[i] = nuevo;
+                    campo.value = nuevo;
+                    guardarConceptos();
+                });
+                campo.addEventListener('keydown', e => {
+                    if (e.key === 'Enter') campo.blur();
+                });
+
+                const borrar = document.createElement('button');
+                borrar.className = 'btn-danger btn-x';
+                borrar.textContent = 'X';
+                borrar.addEventListener('click', () => {
+                    lista.splice(i, 1);
+                    guardarConceptos();
+                    renderizarListaConceptos();
+                });
+
+                fila.appendChild(campo);
+                fila.appendChild(borrar);
+                listaConceptos.appendChild(fila);
+            });
+        }
+
+        function abrirModalConceptos(tipo) {
+            tipoConceptoModal = tipo || 'ingresos';
+            document.querySelectorAll('#modal-conceptos .tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.tipo === tipoConceptoModal);
+            });
+            inputNuevoConcepto.value = '';
+            renderizarListaConceptos();
+            modalConceptos.style.display = 'flex';
+        }
+
+        btnAbrirConceptos.addEventListener('click', () => abrirModalConceptos('ingresos'));
+        cerrarConceptos.addEventListener('click', () => modalConceptos.style.display = 'none');
+
+        document.querySelectorAll('#modal-conceptos .tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                tipoConceptoModal = tab.dataset.tipo;
+                document.querySelectorAll('#modal-conceptos .tab').forEach(t => {
+                    t.classList.toggle('active', t === tab);
+                });
+                renderizarListaConceptos();
+            });
+        });
+
+        function nuevoConceptoFrecuente() {
+            const texto = inputNuevoConcepto.value.trim();
+            if (!texto) return;
+            const lista = conceptosData[tipoConceptoModal];
+            if (lista.some(c => normalizar(c) === normalizar(texto))) {
+                alert('Ese concepto ya existe.');
+                return;
+            }
+            lista.push(texto);
+            guardarConceptos();
+            inputNuevoConcepto.value = '';
+            renderizarListaConceptos();
+            listaConceptos.scrollTop = listaConceptos.scrollHeight;
+        }
+
+        agregarConcepto.addEventListener('click', nuevoConceptoFrecuente);
+        inputNuevoConcepto.addEventListener('keydown', e => {
+            if (e.key === 'Enter') nuevoConceptoFrecuente();
+        });
+
+        /* ---------- Render principal ---------- */
+
+        function renderizarApp() {
+            if (anosData.length === 0) {
+                yearsContainer.innerHTML = `<div id="no-years" class="empty-state" style="padding: 40px;">No hay registros creados. Da clic en "+ Nuevo Registro" para comenzar.</div>`;
+                return;
+            }
+
+            yearsContainer.innerHTML = '';
+
+            anosData.forEach(anio => {
+                const yearCard = document.createElement('div');
+                yearCard.className = `year-card ${anio.minimizado ? 'minimized' : ''}`;
+
+                let mesesHTML = '';
+                if (anio.meses.length === 0) {
+                    mesesHTML = `<div class="empty-state">No hay meses agregados en este registro.</div>`;
+                } else {
+                    anio.meses.forEach(mes => {
+                        const totalIngresos = mes.ingresos.reduce((acc, item) => acc + item.monto, 0);
+                        const totalGastos = mes.gastos.reduce((acc, item) => acc + item.monto, 0);
+                        const restante = totalIngresos - totalGastos;
+
+                        mesesHTML += `
+                            <div class="month-card ${mes.minimizado ? 'minimized' : ''}">
+                                <div class="month-header">
+                                    <span class="month-title">${mes.nombre}</span>
+                                    <div class="month-actions">
+                                        <button class="btn-secondary btn-inline btn-compact" onclick="toggleMinimizarMes(${anio.id}, ${mes.id})">${mes.minimizado ? 'Expandir' : 'Minimizar'}</button>
+                                        <button class="btn-danger btn-compact" onclick="eliminarMes(${anio.id}, ${mes.id})">Eliminar Mes</button>
+                                    </div>
+                                </div>
+
+                                <div class="month-content ${mes.minimizado ? 'hidden' : ''}">
+                                    <div class="summary-grid">
+                                        <div class="summary-item">
+                                            <label>Ingresos</label>
+                                            <span class="positive">$${totalIngresos.toFixed(2)}</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <label>Gastos</label>
+                                            <span class="negative">$${totalGastos.toFixed(2)}</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <label>Restante Mes</label>
+                                            <span class="${restante < 0 ? 'negative' : 'positive'}">$${restante.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="sections-container">
+                                        <!-- Ingresos -->
+                                        <div class="sub-section">
+                                            <h4>Ingresos</h4>
+                                            <div class="inline-form">
+                                                <div class="concept-wrap">
+                                                    <input type="text" id="ingresos-concepto-${mes.id}" class="input-concept" data-tipo="ingresos" placeholder="Concepto" autocomplete="off">
+                                                    <div class="concept-menu"></div>
+                                                </div>
+                                                <input type="date" id="ingresos-fecha-${mes.id}" class="input-date">
+                                                <input type="number" id="ingresos-monto-${mes.id}" class="input-amount" placeholder="Monto" step="0.01">
+                                                <button class="btn-inline" onclick="agregarMovimiento(${anio.id}, ${mes.id}, 'ingresos')">+</button>
+                                            </div>
+                                            <div class="table-container">
+                                                <table>
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Concepto</th>
+                                                            <th>Fecha</th>
+                                                            <th>Monto</th>
+                                                            <th></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        ${mes.ingresos.length === 0 ? `<tr><td colspan="4" class="empty-state">Sin ingresos</td></tr>` :
+                                                            mes.ingresos.map((item, idx) => `
+                                                                <tr>
+                                                                    <td>${escaparHTML(item.concepto)}</td>
+                                                                    <td>${item.fecha}</td>
+                                                                    <td>$${item.monto.toFixed(2)}</td>
+                                                                    <td style="text-align: center;"><button class="btn-danger btn-x" onclick="eliminarMovimiento(${anio.id}, ${mes.id}, 'ingresos', ${idx})">X</button></td>
+                                                                </tr>
+                                                            `).join('')}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <!-- Gastos -->
+                                        <div class="sub-section">
+                                            <h4>Gastos</h4>
+                                            <div class="inline-form">
+                                                <div class="concept-wrap">
+                                                    <input type="text" id="gastos-concepto-${mes.id}" class="input-concept" data-tipo="gastos" placeholder="Concepto" autocomplete="off">
+                                                    <div class="concept-menu"></div>
+                                                </div>
+                                                <input type="date" id="gastos-fecha-${mes.id}" class="input-date">
+                                                <input type="number" id="gastos-monto-${mes.id}" class="input-amount" placeholder="Monto" step="0.01">
+                                                <button class="btn-inline" onclick="agregarMovimiento(${anio.id}, ${mes.id}, 'gastos')">+</button>
+                                            </div>
+                                            <div class="table-container">
+                                                <table>
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Concepto</th>
+                                                            <th>Fecha</th>
+                                                            <th>Monto</th>
+                                                            <th></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        ${mes.gastos.length === 0 ? `<tr><td colspan="4" class="empty-state">Sin gastos</td></tr>` :
+                                                            mes.gastos.map((item, idx) => `
+                                                                <tr>
+                                                                    <td>${escaparHTML(item.concepto)}</td>
+                                                                    <td>${item.fecha}</td>
+                                                                    <td>$${item.monto.toFixed(2)}</td>
+                                                                    <td style="text-align: center;"><button class="btn-danger btn-x" onclick="eliminarMovimiento(${anio.id}, ${mes.id}, 'gastos', ${idx})">X</button></td>
+                                                                </tr>
+                                                            `).join('')}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                yearCard.innerHTML = `
+                    <div class="year-header">
+                        <span class="year-title">${escaparHTML(anio.nombre)}</span>
+                        <div class="year-actions">
+                            <button class="btn-secondary btn-inline btn-compact" onclick="toggleMinimizarAnio(${anio.id})">${anio.minimizado ? 'Expandir' : 'Minimizar'}</button>
+                            <button class="btn-secondary btn-inline btn-compact" onclick="generarResumenAnio(${anio.id})">Resumen</button>
+                            <button class="btn-secondary btn-inline btn-compact" onclick="generarResumenMeses(${anio.id})">Resumen de todo los meses</button>
+                            <button class="btn-secondary btn-inline btn-compact" onclick="abrirModalMes(${anio.id})">+ Mes</button>
+                            <button class="btn-danger btn-compact" onclick="eliminarAnio(${anio.id})">Eliminar</button>
+                        </div>
+                    </div>
+                    <div class="months-list ${anio.minimizado ? 'hidden' : ''}">
+                        ${mesesHTML}
+                    </div>
+                `;
+
+                yearsContainer.appendChild(yearCard);
+            });
+        }
+    </script>
+</body>
+</html>
