@@ -1,0 +1,18 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Koin",
+  "orientation": "any",
+  "scope": "/Gestor-de-Finanzas/",
+  "short_name": "Koin",
+  "start_url": "/Gestor-de-Finanzas/",
+  "theme_color": "#ffffff",
+  "id": "Koin",
+  "description": "Gestor de Gatos e Ingresos",
+  "lang": "es",
+  "categories": [
+    "finance",
+    "productivity"
+  ]
+}
